@@ -1,0 +1,90 @@
+/* src/styles/styles.css */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 30px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.qr-code-placeholder {
+  width: 200px; height: 200px;
+  background: #e9ecef;
+  margin: 20px auto;
+  border: 3px dashed #0076BE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  border-radius: 16px;
+}
+
+.senha-display {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #0076BE;
+  margin: 15px 0;
+}
+
+.timer {
+  color: #0076BE;
+  font-weight: 600;
+}
+
+.feedback.success {
+  color: green;
+  font-weight: 600;
+  margin-top: 15px;
+}
+
+.feedback.error {
+  color: red;
+  font-weight: 600;
+  margin-top: 15px;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  margin: 15px 0;
+  text-align: center;
+}
+
+.btn {
+  background: #0076BE;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+  background: #005a94;
+  transform: scale(1.02);
+}
+
+.btn-secondary {
+  background: #6c757d;
+}
+
+.btn-secondary:hover {
+  background: #545b62;
+}
