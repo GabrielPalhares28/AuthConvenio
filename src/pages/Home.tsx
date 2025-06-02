@@ -91,6 +91,7 @@ const styles = {
     width: '100%',
     maxWidth: '900px',
     padding: '2rem 1rem',
+    margin: '0 auto', // <-- isso aqui
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
     gap: '2rem',
