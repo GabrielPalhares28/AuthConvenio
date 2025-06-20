@@ -83,10 +83,12 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
           src={logo} 
           alt={`Logo ${name}`}
           style={{
-            width: '75%',
-            height: '75%',
+            width: '80px',
+            height: '80px',
             objectFit: 'contain',
-            borderRadius: '50%'
+            borderRadius: '8px', // Removido border-radius circular para melhor visualização da logo
+            maxWidth: '80%',
+            maxHeight: '80%'
           }}
         />
       );
@@ -111,6 +113,7 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
       );
     }
 
+    // Fallback para outros convênios sem logo
     return (
       <span style={{
         fontSize: '2.5rem',
