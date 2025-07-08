@@ -2,12 +2,11 @@ import React, { useState, useCallback } from 'react';
 import { ConvenioCard } from '../components/ConvenioCard';
 import { UnimedModal } from '../components/modals/UnimedModal';
 import { ClinipamModal } from '../components/modals/ClinipamModal';
-import { HapVidaModal } from '../components/modals/HapvidaModal';
 import { OutrosModal } from '../components/modals/OutrosModal';
 import logoCerne from '../assets/logo-cerne.png';
 
 // Tipos para melhor type safety
-type ConvenioType = 'unimed' | 'clinipam' | 'hapvida' | 'outros';
+type ConvenioType = 'unimed' | 'clinipam' | 'outros';
 
 interface ConvenioConfig {
   name: string;
@@ -32,13 +31,6 @@ const CONVENIOS: ConvenioConfig[] = [
     description: 'Autenticação por CPF',
     color: 'linear-gradient(135deg, #ff6b35, #f39c12)',
     key: 'clinipam'
-  },
-  {
-    name: 'HapVida',
-    icon: 'H',
-    description: 'CPF ou Biometria Digital',
-    color: 'linear-gradient(135deg, #005baa, #0066cc)',
-    key: 'hapvida'
   },
   {
     name: 'Outros',
@@ -170,16 +162,19 @@ export const Home: React.FC = () => {
           />
         );
       case 'clinipam':
-        return <ClinipamModal onClose={handleCloseModal} />;
-      case 'hapvida':
         return (
-          <HapVidaModal 
+          <ClinipamModal 
             onClose={handleCloseModal} 
             onSimulate={handleSimulateAuth} 
           />
         );
       case 'outros':
-        return <OutrosModal onClose={handleCloseModal} />;
+        return (
+          <OutrosModal 
+            onClose={handleCloseModal} 
+            onSimulate={handleSimulateAuth} 
+          />
+        );
       default:
         return null;
     }

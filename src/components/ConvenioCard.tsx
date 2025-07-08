@@ -64,9 +64,10 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
     if (loading) {
       return (
         <div
+          className="loading-spinner"
           style={{
-            width: '2.5rem',
-            height: '2.5rem',
+            width: 'clamp(2rem, 5vw, 2.5rem)',
+            height: 'clamp(2rem, 5vw, 2.5rem)',
             border: '4px solid rgba(255,255,255,0.3)',
             borderTop: '4px solid #fff',
             borderRadius: '50%',
@@ -91,9 +92,10 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
         <img 
           src={logo} 
           alt={`Logo ${name}`}
+          className="convenio-logo"
           style={{
-            width: '80px',
-            height: '80px',
+            width: 'clamp(60px, 12vw, 80px)',
+            height: 'clamp(60px, 12vw, 80px)',
             objectFit: 'contain',
             borderRadius: '8px',
             maxWidth: '80%',
@@ -113,11 +115,11 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
     // Para HapVida, renderizar texto estilizado se não tiver logo
     if (name.toLowerCase() === 'hapvida') {
       return (
-        <div style={{
+        <div className="hapvida-text" style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          fontSize: '1.1rem',
+          fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
           fontWeight: 700,
           textAlign: 'center',
           lineHeight: 1.1,
@@ -131,8 +133,8 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
 
     // Fallback para outros convênios sem logo
     return (
-      <span style={{
-        fontSize: '2.5rem',
+      <span className="convenio-icon" style={{
+        fontSize: 'clamp(2rem, 5vw, 2.5rem)',
         fontWeight: 'bold',
         color: '#fff'
       }}>
@@ -143,16 +145,20 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
 
   return (
     <div
+      className="convenio-card"
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '1rem',
+        gap: 'clamp(0.75rem, 2vw, 1rem)',
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.6 : 1,
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         transform: isHovered && !disabled ? 'translateY(-8px)' : 'translateY(0)',
-        animation: !disabled ? 'float 3s ease-in-out infinite' : 'none'
+        animation: !disabled ? 'float 3s ease-in-out infinite' : 'none',
+        width: '100%',
+        maxWidth: '200px',
+        margin: '0 auto'
       }}
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
@@ -165,9 +171,10 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
     >
       {/* Balão circular principal */}
       <div
+        className="convenio-circle"
         style={{
-          width: '120px',
-          height: '120px',
+          width: 'clamp(100px, 20vw, 120px)',
+          height: 'clamp(100px, 20vw, 120px)',
           borderRadius: '50%',
           background: color,
           display: 'flex',
@@ -184,12 +191,13 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
       >
         {/* Efeito de brilho interno */}
         <div
+          className="shine-effect"
           style={{
             position: 'absolute',
-            top: '10px',
-            left: '10px',
-            width: '30px',
-            height: '30px',
+            top: 'clamp(8px, 2vw, 10px)',
+            left: 'clamp(8px, 2vw, 10px)',
+            width: 'clamp(25px, 5vw, 30px)',
+            height: 'clamp(25px, 5vw, 30px)',
             borderRadius: '50%',
             background: 'rgba(255, 255, 255, 0.3)',
             opacity: isHovered ? 0.6 : 0.3,
@@ -200,6 +208,7 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
         {/* Efeito de shimmer para loading */}
         {loading && (
           <div
+            className="shimmer-effect"
             style={{
               position: 'absolute',
               top: 0,
@@ -218,20 +227,23 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
 
       {/* Label flutuante */}
       <div
+        className="convenio-label"
         style={{
           background: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(10px)',
-          borderRadius: '20px',
-          padding: '0.75rem 1.25rem',
+          borderRadius: 'clamp(15px, 3vw, 20px)',
+          padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.25rem)',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
           border: '1px solid rgba(255, 255, 255, 0.2)',
           transform: isHovered && !disabled ? 'scale(1.05)' : 'scale(1)',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          textAlign: 'center'
+          textAlign: 'center',
+          width: '100%',
+          minWidth: 'fit-content'
         }}
       >
-        <h3 style={{
-          fontSize: '1.1rem',
+        <h3 className="convenio-title" style={{
+          fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
           fontWeight: 600,
           margin: '0 0 0.25rem 0',
           color: '#2d3748',
@@ -239,9 +251,9 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
         }}>
           {name}
         </h3>
-        <p style={{
+        <p className="convenio-description" style={{
           color: '#6c757d',
-          fontSize: '0.85rem',
+          fontSize: 'clamp(0.75rem, 2vw, 0.85rem)',
           margin: 0,
           lineHeight: 1.4,
           opacity: isHovered ? 1 : 0.8,
@@ -278,21 +290,188 @@ export const ConvenioCard: React.FC<ConvenioCardProps> = ({
         }
 
         /* Efeito de foco para acessibilidade */
-        [role="button"]:focus-visible {
+        .convenio-card:focus-visible {
           outline: 3px solid #0076BE;
           outline-offset: 4px;
           border-radius: 50%;
         }
 
+        /* Responsividade aprimorada */
+        @media (max-width: 480px) {
+          .convenio-card {
+            gap: 0.75rem;
+            max-width: 160px;
+          }
+          
+          .convenio-circle {
+            min-width: 90px;
+            min-height: 90px;
+          }
+          
+          .convenio-label {
+            padding: 0.5rem 0.75rem;
+            border-radius: 15px;
+          }
+          
+          .convenio-title {
+            font-size: 0.95rem;
+            margin-bottom: 0.15rem;
+          }
+          
+          .convenio-description {
+            font-size: 0.75rem;
+            line-height: 1.3;
+          }
+          
+          .convenio-logo {
+            min-width: 50px;
+            min-height: 50px;
+          }
+          
+          .hapvida-text {
+            font-size: 0.85rem;
+          }
+          
+          .convenio-icon {
+            font-size: 1.8rem;
+          }
+          
+          .loading-spinner {
+            min-width: 1.8rem;
+            min-height: 1.8rem;
+          }
+        }
+
+        @media (min-width: 481px) and (max-width: 768px) {
+          .convenio-card {
+            gap: 0.85rem;
+            max-width: 180px;
+          }
+          
+          .convenio-circle {
+            min-width: 100px;
+            min-height: 100px;
+          }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .convenio-card {
+            gap: 0.9rem;
+            max-width: 190px;
+          }
+          
+          .convenio-circle {
+            min-width: 110px;
+            min-height: 110px;
+          }
+        }
+
+        @media (min-width: 1025px) {
+          .convenio-card {
+            gap: 1rem;
+            max-width: 200px;
+          }
+          
+          .convenio-circle {
+            min-width: 120px;
+            min-height: 120px;
+          }
+        }
+
+        /* Para dispositivos em landscape (celular deitado) */
+        @media (max-height: 500px) and (orientation: landscape) {
+          .convenio-card {
+            gap: 0.5rem;
+            max-width: 140px;
+          }
+          
+          .convenio-circle {
+            width: 80px;
+            height: 80px;
+            min-width: 80px;
+            min-height: 80px;
+          }
+          
+          .convenio-label {
+            padding: 0.4rem 0.8rem;
+          }
+          
+          .convenio-title {
+            font-size: 0.9rem;
+            margin-bottom: 0.1rem;
+          }
+          
+          .convenio-description {
+            font-size: 0.7rem;
+          }
+        }
+
+        /* Ajustes para telas muito pequenas */
+        @media (max-width: 320px) {
+          .convenio-card {
+            gap: 0.6rem;
+            max-width: 140px;
+          }
+          
+          .convenio-circle {
+            width: 80px;
+            height: 80px;
+            min-width: 80px;
+            min-height: 80px;
+          }
+          
+          .convenio-label {
+            padding: 0.4rem 0.6rem;
+            border-radius: 12px;
+          }
+          
+          .convenio-title {
+            font-size: 0.85rem;
+          }
+          
+          .convenio-description {
+            font-size: 0.7rem;
+          }
+        }
+
+        /* Desabilitar animações para quem prefere movimento reduzido */
         @media (prefers-reduced-motion: reduce) {
-          * {
+          .convenio-card,
+          .convenio-circle,
+          .convenio-label,
+          .shine-effect,
+          .shimmer-effect,
+          .loading-spinner {
             animation: none !important;
             transition: none !important;
           }
         }
 
-        @media (max-width: 768px) {
-          /* Ajustes para mobile */
+        /* Melhor contraste para modo escuro */
+        @media (prefers-color-scheme: dark) {
+          .convenio-label {
+            background: rgba(45, 55, 72, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+          }
+          
+          .convenio-title {
+            color: #f7fafc;
+          }
+          
+          .convenio-description {
+            color: #a0aec0;
+          }
+        }
+
+        /* Ajustes para alta densidade de pixels */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+          .convenio-circle {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          }
+          
+          .convenio-card:hover .convenio-circle {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15), 0 0 15px rgba(255, 255, 255, 0.05);
+          }
         }
       `}</style>
     </div>

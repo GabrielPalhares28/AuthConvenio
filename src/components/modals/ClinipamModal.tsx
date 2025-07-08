@@ -1,8 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import logoClinipam from '../../assets/logo-clinipam.png';
+import React, { useState, useEffect } from 'react';
 
-interface Props {
+interface ClinipamModalProps {
   onClose: () => void;
+  onSimulate: () => void;
+}
+
+type AuthMethod = 'cpf' | 'biometria';
+type FlowStep = 'auth' | 'senha' | 'executar' | 'biometria' | 'agenda';
+
+interface Senha {
+  id: string;
+  especialidade: string;
+  numero: string;
+  validade: string;
+  status: 'pendente' | 'ativa' | 'expirada';
+  tempoRestante?: number;
 }
 
 const styles = {
@@ -12,28 +24,30 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)'
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)'
   },
   content: {
     background: 'linear-gradient(145deg, #ffffff, #f8fafb)',
-    borderRadius: '24px',
-    padding: '2.5rem',
-    width: '90%',
-    maxWidth: '480px',
-    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.5)',
+    borderRadius: '28px',
+    padding: '2rem',
+    width: '95%',
+    maxWidth: '650px',
+    maxHeight: '90vh',
+    overflowY: 'auto' as const,
+    boxShadow: '0 30px 100px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.6)',
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
-    gap: '2rem',
+    gap: '1.5rem',
     position: 'relative' as const,
-    animation: 'modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-    border: '1px solid rgba(255, 255, 255, 0.2)'
+    animation: 'modalSlideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    border: '1px solid rgba(255, 255, 255, 0.3)'
   },
   closeButton: {
     position: 'absolute' as const,
@@ -42,20 +56,21 @@ const styles = {
     background: 'rgba(108, 117, 125, 0.1)',
     border: 'none',
     borderRadius: '50%',
-    width: '32px',
-    height: '32px',
+    width: '36px',
+    height: '36px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '1.2rem',
+    fontSize: '1.3rem',
     color: '#6c757d',
     transition: 'all 0.2s ease',
-    backdropFilter: 'blur(10px)'
+    backdropFilter: 'blur(10px)',
+    zIndex: 10
   },
   logoContainer: {
-    width: 90,
-    height: 90,
+    width: 80,
+    height: 80,
     borderRadius: '50%',
     background: 'linear-gradient(135deg, #ff6b35, #f39c12, #ff8c42)',
     display: 'flex',
@@ -66,24 +81,12 @@ const styles = {
     position: 'relative' as const,
     animation: 'logoFloat 3s ease-in-out infinite'
   },
-  logoGlow: {
-    position: 'absolute' as const,
-    top: '-2px',
-    left: '-2px',
-    right: '-2px',
-    bottom: '-2px',
-    borderRadius: '50%',
-    background: 'linear-gradient(135deg, #ff6b35, #f39c12)',
-    filter: 'blur(8px)',
-    opacity: 0.3,
-    zIndex: -1
-  },
-  logoImage: {
-    width: '75%',
-    height: '75%',
-    objectFit: 'contain' as const,
-    borderRadius: '50%',
-    filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1))'
+  logoText: {
+    color: '#ffffff',
+    fontSize: '0.85rem',
+    fontWeight: 700,
+    textAlign: 'center' as const,
+    textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
   },
   titleContainer: {
     textAlign: 'center' as const,
@@ -93,7 +96,7 @@ const styles = {
   },
   title: {
     color: '#1a202c',
-    fontSize: '1.75rem',
+    fontSize: '1.6rem',
     fontWeight: 700,
     margin: 0,
     background: 'linear-gradient(135deg, #ff6b35, #d35400)',
@@ -103,96 +106,228 @@ const styles = {
   },
   subtitle: {
     color: '#4a5568',
-    fontSize: '1rem',
+    fontSize: '0.9rem',
     margin: 0,
     fontWeight: 500,
     textAlign: 'center' as const,
     lineHeight: 1.5
   },
-  senhaContainer: {
-    position: 'relative' as const,
-    padding: '1rem'
-  },
-  senhaDisplay: {
-    background: 'linear-gradient(145deg, #fff, #f8f9fa)',
-    border: '3px solid #ff6b35',
+  stepIndicator: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    background: 'rgba(255, 107, 53, 0.1)',
+    padding: '0.5rem 1rem',
     borderRadius: '20px',
-    padding: '1.5rem 2rem',
-    fontSize: '3rem',
-    fontWeight: 'bold' as const,
+    fontSize: '0.8rem',
+    fontWeight: 600,
     color: '#ff6b35',
+    border: '1px solid rgba(255, 107, 53, 0.2)'
+  },
+  authMethodSelector: {
+    display: 'flex',
+    gap: '1rem',
+    marginBottom: '1rem'
+  },
+  authMethodButton: {
+    background: 'rgba(255, 107, 53, 0.1)',
+    border: '2px solid rgba(255, 107, 53, 0.3)',
+    borderRadius: '12px',
+    padding: '0.75rem 1.2rem',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    fontSize: '0.85rem',
+    fontWeight: 500,
+    color: '#ff6b35',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem'
+  },
+  authMethodButtonActive: {
+    background: 'linear-gradient(135deg, #ff6b35, #f39c12)',
+    border: '2px solid #ff6b35',
+    color: '#ffffff',
+    boxShadow: '0 4px 15px rgba(255, 107, 53, 0.3)'
+  },
+  mainContainer: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '1.5rem',
+    alignItems: 'center'
+  },
+  cpfInput: {
+    width: '100%',
+    maxWidth: '280px',
+    padding: '1rem',
+    borderRadius: '12px',
+    border: '2px solid rgba(255, 107, 53, 0.3)',
+    fontSize: '1rem',
     textAlign: 'center' as const,
-    fontFamily: 'monospace',
-    letterSpacing: '0.4rem',
-    minWidth: 220,
-    position: 'relative' as const,
-    overflow: 'hidden',
-    boxShadow: '0 8px 32px rgba(255, 107, 53, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-    animation: 'senhaAppear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
+    outline: 'none',
+    transition: 'all 0.3s ease',
+    background: 'rgba(255, 255, 255, 0.9)'
   },
-  senhaGlow: {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'linear-gradient(45deg, transparent 30%, rgba(255, 107, 53, 0.1) 50%, transparent 70%)',
-    animation: 'shimmer 2s infinite'
+  senhaContainer: {
+    width: '100%',
+    background: 'linear-gradient(145deg, #f8fafb, #ffffff)',
+    border: '2px solid rgba(255, 107, 53, 0.2)',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
   },
-  senhaPlaceholder: {
-    width: 220,
-    height: 120,
-    background: 'linear-gradient(145deg, #f7f9fc, #e2e8f0)',
-    border: '3px dashed #ff6b35',
-    borderRadius: 20,
+  senhaHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1rem',
+    paddingBottom: '0.5rem',
+    borderBottom: '1px solid rgba(255, 107, 53, 0.2)'
+  },
+  senhaTitle: {
+    fontSize: '1.1rem',
+    fontWeight: 600,
+    color: '#1a202c',
+    margin: 0
+  },
+  statusBadge: {
+    padding: '0.3rem 0.8rem',
+    borderRadius: '12px',
+    fontSize: '0.75rem',
+    fontWeight: 500,
+    textTransform: 'uppercase' as const
+  },
+  statusPendente: {
+    background: '#fef3cd',
+    color: '#856404',
+    border: '1px solid #ffeaa7'
+  },
+  statusAtiva: {
+    background: '#d1ecf1',
+    color: '#0c5460',
+    border: '1px solid #bee5eb'
+  },
+  statusExpirada: {
+    background: '#f8d7da',
+    color: '#721c24',
+    border: '1px solid #f5c6cb'
+  },
+  senhaList: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.8rem'
+  },
+  senhaItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '0.8rem',
+    background: 'rgba(255, 255, 255, 0.7)',
+    borderRadius: '8px',
+    border: '1px solid rgba(255, 107, 53, 0.1)'
+  },
+  senhaInfo: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '0.2rem'
+  },
+  senhaEspecialidade: {
+    fontWeight: 600,
+    color: '#1a202c',
+    fontSize: '0.9rem'
+  },
+  senhaNumero: {
+    color: '#ff6b35',
+    fontWeight: 500,
+    fontSize: '0.8rem'
+  },
+  senhaValidade: {
+    color: '#6c757d',
+    fontSize: '0.75rem'
+  },
+  biometriaContainer: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '1rem',
+    padding: '1.5rem',
+    background: 'linear-gradient(145deg, #f7f9fc, #e8f4f8)',
+    borderRadius: '20px',
+    border: '2px dashed #ff6b35',
+    width: '100%',
+    maxWidth: '320px'
+  },
+  biometriaPlaceholder: {
+    width: 140,
+    height: 140,
+    background: 'linear-gradient(145deg, #ffffff, #f0f8ff)',
+    border: '3px solid #ff6b35',
+    borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '1rem',
-    fontWeight: 600,
+    fontSize: '3rem',
     color: '#ff6b35',
     position: 'relative' as const,
-    overflow: 'hidden',
-    boxShadow: 'inset 0 2px 10px rgba(0, 0, 0, 0.05)'
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 8px 25px rgba(255, 107, 53, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.8)'
   },
-  placeholderText: {
+  biometriaText: {
+    textAlign: 'center' as const,
+    color: '#ff6b35',
+    fontWeight: 600
+  },
+  timerContainer: {
     display: 'flex',
     flexDirection: 'column' as const,
     alignItems: 'center',
     gap: '0.5rem',
-    opacity: 0.7
+    padding: '1rem',
+    background: 'rgba(255, 107, 53, 0.1)',
+    borderRadius: '12px',
+    border: '1px solid rgba(255, 107, 53, 0.2)'
   },
-  timer: {
-    color: '#28a745',
-    fontSize: '1rem',
-    fontWeight: 600,
-    padding: '0.75rem 1.5rem',
-    background: 'rgba(40, 167, 69, 0.1)',
-    border: '1px solid rgba(40, 167, 69, 0.2)',
-    borderRadius: '25px',
+  timerText: {
+    fontSize: '1.2rem',
+    fontWeight: 700,
+    color: '#ff6b35'
+  },
+  timerLabel: {
+    fontSize: '0.8rem',
+    color: '#6c757d',
+    textAlign: 'center' as const
+  },
+  agendaContainer: {
+    width: '100%',
+    background: 'linear-gradient(145deg, #f8fafb, #ffffff)',
+    border: '2px solid rgba(255, 107, 53, 0.2)',
+    borderRadius: '16px',
+    padding: '1.5rem'
+  },
+  agendaItem: {
     display: 'flex',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '0.5rem',
-    animation: 'timerPulse 2s ease-in-out infinite'
-  },
-  timerExpired: {
-    color: '#dc3545',
-    background: 'rgba(220, 53, 69, 0.1)',
-    border: '1px solid rgba(220, 53, 69, 0.2)',
-    animation: 'timerExpiredShake 0.5s ease-in-out'
+    padding: '1rem',
+    background: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: '10px',
+    marginBottom: '0.8rem',
+    border: '1px solid rgba(255, 107, 53, 0.1)',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
   },
   button: {
     background: 'linear-gradient(135deg, #ff6b35, #f39c12, #ff8c42)',
     color: '#fff',
     border: 'none',
-    borderRadius: '16px',
-    padding: '1.2rem 2.5rem',
-    fontSize: '1.1rem',
+    borderRadius: '14px',
+    padding: '1rem 2rem',
+    fontSize: '0.95rem',
     fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     boxShadow: '0 6px 20px rgba(255, 107, 53, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-    minWidth: '180px',
+    minWidth: '160px',
     position: 'relative' as const,
     overflow: 'hidden'
   },
@@ -200,70 +335,339 @@ const styles = {
     background: 'linear-gradient(135deg, #6c757d, #868e96)',
     boxShadow: '0 6px 20px rgba(108, 117, 125, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
   },
-  buttonRipple: {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%)',
-    transform: 'translateX(-100%)',
-    transition: 'transform 0.6s'
+  buttonDisabled: {
+    opacity: 0.5,
+    cursor: 'not-allowed'
   },
   actions: {
     display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '1.5rem',
+    gap: '1rem',
     width: '100%',
-    alignItems: 'center'
+    justifyContent: 'center',
+    flexWrap: 'wrap' as const
   },
-  securityBadge: {
-    background: 'rgba(255, 107, 53, 0.1)',
+  infoCard: {
+    background: 'rgba(255, 107, 53, 0.05)',
     border: '1px solid rgba(255, 107, 53, 0.2)',
     borderRadius: '12px',
-    padding: '0.75rem 1.5rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    fontSize: '0.9rem',
-    color: '#ff6b35',
-    fontWeight: 500
+    padding: '1rem',
+    fontSize: '0.85rem',
+    color: '#4a5568',
+    lineHeight: 1.5,
+    width: '100%'
   }
 };
 
-export const ClinipamModal: React.FC<Props> = ({ onClose }) => {
-  const [senha, setSenha] = useState('');
-  const [timer, setTimer] = useState(300);
-
-  const gerarSenha = () => {
-    const aleatoria = Math.floor(Math.random() * 9000 + 1000).toString();
-    setSenha(aleatoria);
-    setTimer(300);
-  };
+export const ClinipamModal: React.FC<ClinipamModalProps> = ({ onClose }) => {
+  const [authMethod, setAuthMethod] = useState<AuthMethod>('cpf');
+  const [cpf, setCpf] = useState('');
+  const [currentStep, setCurrentStep] = useState<FlowStep>('auth');
+  const [senhas, setSenhas] = useState<Senha[]>([]);
+  const [biometriaTimer, setBiometriaTimer] = useState<number>(0);
+  const [proximaColeta, setProximaColeta] = useState<string>('');
 
   useEffect(() => {
-    if (!senha) return;
-    const interval = setInterval(() => {
-      setTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
+    // Simular carregamento das senhas após autenticação
+    if (currentStep === 'senha') {
+      setSenhas([
+        {
+          id: '1',
+          especialidade: 'Fisioterapia',
+          numero: 'FIS2024001',
+          validade: '15/07/2024',
+          status: 'ativa'
+        },
+        {
+          id: '2',
+          especialidade: 'Fonoaudiologia',
+          numero: 'FON2024002',
+          validade: '20/07/2024',
+          status: 'pendente'
+        },
+        {
+          id: '3',
+          especialidade: 'Terapia Ocupacional',
+          numero: 'TO2024003',
+          validade: '12/07/2024',
+          status: 'expirada'
         }
-        return prev - 1;
-      });
-    }, 1000);
+      ]);
+    }
+  }, [currentStep]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (biometriaTimer > 0) {
+      interval = setInterval(() => {
+        setBiometriaTimer(prev => {
+          if (prev <= 1) {
+            setProximaColeta(new Date(Date.now() + 40 * 60 * 1000).toLocaleTimeString());
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
     return () => clearInterval(interval);
-  }, [senha]);
+  }, [biometriaTimer]);
 
-  const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+  const formatCPF = (value: string): string => {
+    const numbers = value.replace(/\D/g, '');
+    return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  };
 
-  const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const ripple = e.currentTarget.querySelector('.button-ripple') as HTMLElement;
-    if (ripple) {
-      ripple.style.transform = 'translateX(0)';
-      setTimeout(() => {
-        ripple.style.transform = 'translateX(100%)';
-      }, 600);
+  const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const formatted = formatCPF(e.target.value);
+    if (formatted.length <= 14) {
+      setCpf(formatted);
+    }
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleAuthenticate = (): void => {
+    if (isAuthValid) {
+      setCurrentStep('senha');
+    }
+  };
+
+  const handleSolicitarSenha = (): void => {
+    // Simular processo de solicitação
+    alert('Senha solicitada! Prazo: até 10 dias úteis');
+  };
+
+  const handleExecutarSenha = (): void => {
+    setCurrentStep('executar');
+  };
+
+  const handleBiometriaColeta = (): void => {
+    setBiometriaTimer(40 * 60); // 40 minutos em segundos
+    setCurrentStep('agenda');
+    alert('Biometria coletada com sucesso! Próxima coleta em 40 minutos.');
+  };
+
+  const getStepTitle = (): string => {
+    switch (currentStep) {
+      case 'auth': return 'Autenticação';
+      case 'senha': return 'Gestão de Senhas';
+      case 'executar': return 'Executar no Sistema';
+      case 'biometria': return 'Coleta Biométrica';
+      case 'agenda': return 'Agenda de Atendimentos';
+      default: return 'Clinipam';
+    }
+  };
+
+  const getStepDescription = (): string => {
+    switch (currentStep) {
+      case 'auth': return 'Escolha seu método de autenticação';
+      case 'senha': return 'Gerencie as senhas de liberação por especialidade';
+      case 'executar': return 'Insira a senha no campo "executar" do site da operadora';
+      case 'biometria': return 'Coleta da digital do responsável ou paciente';
+      case 'agenda': return 'Acompanhe os horários para próximas coletas';
+      default: return '';
+    }
+  };
+
+  const isAuthValid = authMethod === 'cpf' ? cpf.length === 14 : true;
+
+  const renderContent = () => {
+    switch (currentStep) {
+      case 'auth':
+        return (
+          <>
+            <div style={styles.authMethodSelector}>
+              <button
+                style={{
+                  ...styles.authMethodButton,
+                  ...(authMethod === 'cpf' ? styles.authMethodButtonActive : {})
+                }}
+                onClick={() => setAuthMethod('cpf')}
+              >
+                <span>📄</span>
+                CPF
+              </button>
+              <button
+                style={{
+                  ...styles.authMethodButton,
+                  ...(authMethod === 'biometria' ? styles.authMethodButtonActive : {})
+                }}
+                onClick={() => setAuthMethod('biometria')}
+              >
+                <span>👆</span>
+                Biometria
+              </button>
+            </div>
+
+            <div style={styles.mainContainer}>
+              {authMethod === 'cpf' ? (
+                <input
+                  type="text"
+                  placeholder="000.000.000-00"
+                  value={cpf}
+                  onChange={handleCPFChange}
+                  style={{
+                    ...styles.cpfInput,
+                    borderColor: cpf ? '#ff6b35' : 'rgba(255, 107, 53, 0.3)',
+                    boxShadow: cpf ? '0 0 0 3px rgba(255, 107, 53, 0.1)' : 'none'
+                  }}
+                />
+              ) : (
+                <div style={styles.biometriaContainer}>
+                  <div style={styles.biometriaPlaceholder}>
+                    <span>👆</span>
+                  </div>
+                  <div style={styles.biometriaText}>
+                    <div>TOQUE AQUI</div>
+                    <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Biometria Digital</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        );
+
+      case 'senha':
+        return (
+          <div style={styles.senhaContainer}>
+            <div style={styles.senhaHeader}>
+              <h3 style={styles.senhaTitle}>Senhas por Especialidade</h3>
+              <button 
+                style={{ ...styles.button, fontSize: '0.8rem', padding: '0.5rem 1rem', minWidth: 'auto' }}
+                onClick={handleSolicitarSenha}
+              >
+                + Solicitar Nova
+              </button>
+            </div>
+            
+            <div style={styles.infoCard}>
+              <strong>ℹ️ Importante:</strong> Cada especialidade requer uma senha específica. 
+              O prazo de liberação pode ser imediato ou até 10 dias úteis, conforme determinado pelo convênio.
+            </div>
+
+            <div style={styles.senhaList}>
+              {senhas.map(senha => (
+                <div key={senha.id} style={styles.senhaItem}>
+                  <div style={styles.senhaInfo}>
+                    <div style={styles.senhaEspecialidade}>{senha.especialidade}</div>
+                    <div style={styles.senhaNumero}>Senha: {senha.numero}</div>
+                    <div style={styles.senhaValidade}>Válida até: {senha.validade}</div>
+                  </div>
+                  <div style={{
+                    ...styles.statusBadge,
+                    ...(senha.status === 'pendente' ? styles.statusPendente : 
+                        senha.status === 'ativa' ? styles.statusAtiva : styles.statusExpirada)
+                  }}>
+                    {senha.status}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'executar':
+        return (
+          <div style={styles.mainContainer}>
+            <div style={styles.infoCard}>
+              <strong>🌐 Próximo Passo:</strong> Acesse o site da operadora e insira a senha no campo "executar" 
+              para registrar o atendimento e possibilitar a cobrança.
+            </div>
+            
+            <div style={{ textAlign: 'center', padding: '2rem' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💻</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#1a202c', marginBottom: '0.5rem' }}>
+                Redirecionando para o Site da Operadora
+              </div>
+              <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>
+                Você será direcionado para inserir a senha no sistema
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'biometria':
+        return (
+          <div style={styles.mainContainer}>
+            <div style={styles.infoCard}>
+              <strong>👆 Coleta Biométrica:</strong> Após inserir a senha, o sistema exigirá a coleta da digital 
+              do responsável legal ou paciente. Cada biometria permite a cobrança de um atendimento.
+            </div>
+
+            <div style={styles.biometriaContainer}>
+              <div 
+                style={styles.biometriaPlaceholder}
+                onClick={handleBiometriaColeta}
+              >
+                <span>👆</span>
+              </div>
+              <div style={styles.biometriaText}>
+                <div>TOQUE PARA COLETAR</div>
+                <div style={{ fontSize: '0.8rem', opacity: 0.7 }}>Biometria Digital</div>
+              </div>
+            </div>
+
+            {biometriaTimer > 0 && (
+              <div style={styles.timerContainer}>
+                <div style={styles.timerText}>{formatTime(biometriaTimer)}</div>
+                <div style={styles.timerLabel}>Tempo para próxima coleta</div>
+              </div>
+            )}
+          </div>
+        );
+
+      case 'agenda':
+        return (
+          <div style={styles.agendaContainer}>
+            <div style={styles.senhaHeader}>
+              <h3 style={styles.senhaTitle}>Agenda de Atendimentos</h3>
+            </div>
+
+            <div style={styles.infoCard}>
+              <strong>⏱️ Sistema de Intervalos:</strong> Aguarde 40 minutos entre cada coleta de biometria. 
+              O sistema indica o horário exato para a próxima validação.
+            </div>
+
+            {proximaColeta && (
+              <div style={styles.timerContainer}>
+                <div style={styles.timerText}>{proximaColeta}</div>
+                <div style={styles.timerLabel}>Próxima coleta disponível</div>
+              </div>
+            )}
+
+            <div style={styles.agendaItem}>
+              <div>
+                <div style={{ fontWeight: 600 }}>Fisioterapia - João Silva</div>
+                <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>14:00 - Sala 1</div>
+              </div>
+              <div style={{
+                ...styles.statusBadge,
+                ...styles.statusAtiva
+              }}>
+                Liberado
+              </div>
+            </div>
+
+            <div style={styles.agendaItem}>
+              <div>
+                <div style={{ fontWeight: 600 }}>Fonoaudiologia - Maria Santos</div>
+                <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>14:40 - Sala 2</div>
+              </div>
+              <div style={{
+                ...styles.statusBadge,
+                ...styles.statusPendente
+              }}>
+                Aguardando
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
     }
   };
 
@@ -287,84 +691,104 @@ export const ClinipamModal: React.FC<Props> = ({ onClose }) => {
           </button>
 
           <div style={styles.logoContainer}>
-            <div style={styles.logoGlow}></div>
-            <img src={logoClinipam} alt="Logo Clinipam" style={styles.logoImage} />
+            <div style={styles.logoText}>Clinipam</div>
+          </div>
+
+          <div style={styles.stepIndicator}>
+            <span>📍</span>
+            <span>{getStepTitle()}</span>
           </div>
 
           <div style={styles.titleContainer}>
-            <h2 style={styles.title}>🧑‍⚕️ Clinipam</h2>
-            <p style={styles.subtitle}>Clique no botão abaixo para gerar sua senha de autenticação temporária</p>
+            <h2 style={styles.title}>🏥 Sistema Clinipam</h2>
+            <p style={styles.subtitle}>{getStepDescription()}</p>
           </div>
 
-          <div style={styles.senhaContainer}>
-            {senha ? (
-              <div style={styles.senhaDisplay}>
-                <div style={styles.senhaGlow}></div>
-                {senha}
-              </div>
-            ) : (
-              <div style={styles.senhaPlaceholder}>
-                <div style={styles.placeholderText}>
-                  <span style={{ fontSize: '2rem' }}>🔐</span>
-                  <span>Senha será gerada aqui</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {senha && (
-            <>
-              {timer > 0 ? (
-                <div style={styles.timer}>
-                  <span>⏱️</span>
-                  <span>Expira em: {formatTime(timer)}</span>
-                </div>
-              ) : (
-                <div style={{ ...styles.timer, ...styles.timerExpired }}>
-                  <span>⚠️</span>
-                  <span>Senha expirada</span>
-                </div>
-              )}
-            </>
-          )}
-
-          <div style={styles.securityBadge}>
-            <span>🔒</span>
-            <span>Autenticação segura e temporária</span>
-          </div>
+          {renderContent()}
 
           <div style={styles.actions}>
-            <button 
-              style={styles.button} 
-              onClick={gerarSenha}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(255, 107, 53, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
-                handleButtonHover(e);
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(255, 107, 53, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
-              }}
-            >
-              <div className="button-ripple" style={styles.buttonRipple}></div>
-              {senha ? '🔁 Gerar Nova Senha' : '⚡ Gerar Senha'}
-            </button>
-            
-            <button 
-              style={{ ...styles.button, ...styles.buttonSecondary }} 
-              onClick={onClose}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(108, 117, 125, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(108, 117, 125, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
-              }}
-            >
-              Cancelar
-            </button>
+            {currentStep === 'auth' && (
+              <>
+                <button 
+                  style={{
+                    ...styles.button,
+                    ...(isAuthValid ? {} : styles.buttonDisabled)
+                  }}
+                  onClick={handleAuthenticate}
+                  disabled={!isAuthValid}
+                >
+                  ✨ Autenticar
+                </button>
+                <button 
+                  style={{ ...styles.button, ...styles.buttonSecondary }} 
+                  onClick={onClose}
+                >
+                  Cancelar
+                </button>
+              </>
+            )}
+
+            {currentStep === 'senha' && (
+              <>
+                <button 
+                  style={styles.button}
+                  onClick={handleExecutarSenha}
+                >
+                  🚀 Executar Senhas
+                </button>
+                <button 
+                  style={{ ...styles.button, ...styles.buttonSecondary }} 
+                  onClick={() => setCurrentStep('auth')}
+                >
+                  ← Voltar
+                </button>
+              </>
+            )}
+
+            {currentStep === 'executar' && (
+              <>
+                <button 
+                  style={styles.button}
+                  onClick={() => setCurrentStep('biometria')}
+                >
+                  ✅ Senha Inserida
+                </button>
+                <button 
+                  style={{ ...styles.button, ...styles.buttonSecondary }} 
+                  onClick={() => setCurrentStep('senha')}
+                >
+                  ← Voltar
+                </button>
+              </>
+            )}
+
+            {currentStep === 'biometria' && (
+              <>
+                <button 
+                  style={{ ...styles.button, ...styles.buttonSecondary }} 
+                  onClick={() => setCurrentStep('executar')}
+                >
+                  ← Voltar
+                </button>
+              </>
+            )}
+
+            {currentStep === 'agenda' && (
+              <>
+                <button 
+                  style={styles.button}
+                  onClick={() => setCurrentStep('biometria')}
+                >
+                  🔄 Nova Coleta
+                </button>
+                <button 
+                  style={{ ...styles.button, ...styles.buttonSecondary }} 
+                  onClick={onClose}
+                >
+                  ✅ Finalizar
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -396,40 +820,6 @@ export const ClinipamModal: React.FC<Props> = ({ onClose }) => {
           }
           100% {
             transform: translateX(100%);
-          }
-        }
-
-        @keyframes senhaAppear {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        @keyframes timerPulse {
-          0%, 100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-          50% {
-            transform: scale(1.02);
-            opacity: 0.9;
-          }
-        }
-
-        @keyframes timerExpiredShake {
-          0%, 100% {
-            transform: translateX(0);
-          }
-          25% {
-            transform: translateX(-5px);
-          }
-          75% {
-            transform: translateX(5px);
           }
         }
       `}</style>
